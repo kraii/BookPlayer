@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">BookPlayer</string>
+
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">MAtt MADE THIS POOP</string>
+    <string name="play_button">Play</string>
+    <string name="pause_button">Pause</string>
+</resources>
