@@ -19,10 +19,6 @@ class FullscreenActivity : AppCompatActivity() {
     private val mHideHandler = Handler()
     private val mHidePart2Runnable = Runnable {
         // Delayed removal of status and navigation bar
-
-        // Note that some of these constants are new as of API 16 (Jelly Bean)
-        // and API 19 (KitKat). It is safe to use them, as they are inlined
-        // at compile-time and do nothing on earlier devices.
         fullscreen_content!!.systemUiVisibility = View.SYSTEM_UI_FLAG_LOW_PROFILE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
     }
     private val mShowPart2Runnable = Runnable {
@@ -33,13 +29,13 @@ class FullscreenActivity : AppCompatActivity() {
     }
     private var mVisible: Boolean = false
     private val mHideRunnable = Runnable { hide() }
-    private var mediaPlayer: MediaPlayer? = null
+    private val mediaPlayer: MediaPlayer = MediaPlayer()
     /**
      * Touch listener to use for in-layout UI controls to delay hiding the
      * system UI. This is to prevent the jarring behavior of controls going away
      * while interacting with activity UI.
      */
-    private val mDelayHideTouchListener = View.OnTouchListener { view, motionEvent ->
+    private val mDelayHideTouchListener = View.OnTouchListener { _, _ ->
         if (AUTO_HIDE) {
             delayedHide(AUTO_HIDE_DELAY_MILLIS)
         }
@@ -61,22 +57,30 @@ class FullscreenActivity : AppCompatActivity() {
         dummy_button.setOnTouchListener(mDelayHideTouchListener)
 
         val uri = Uri.parse(Environment.getExternalStorageDirectory().path + "/AudioBooks/not_a_book.mp3")
-        mediaPlayer = MediaPlayer.create(this, uri)
+        mediaPlayer.setDataSource(this, uri)
+        mediaPlayer.prepare()
         play.setOnClickListener(this::play)
         pause.setOnClickListener(this::pause)
+        reset.setOnClickListener(this::reset)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun play(view : View) {
-        mediaPlayer?.start()
+        mediaPlayer.start()
         play.visibility = GONE
         pause.visibility = VISIBLE
     }
 
-
-    private fun pause(view : View) {
-        mediaPlayer?.pause()
+    @Suppress("UNUSED_PARAMETER")
+    private fun pause(unused : View) {
+        mediaPlayer.pause()
         play.visibility = VISIBLE
         pause.visibility = GONE
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun reset(view: View) {
+        mediaPlayer.seekTo(0)
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
@@ -89,7 +93,7 @@ class FullscreenActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        mediaPlayer?.stop()
+        mediaPlayer.stop()
         super.onDestroy()
     }
 

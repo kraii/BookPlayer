@@ -5,4 +5,5 @@
     <string name="dummy_content">MAtt MADE THIS POOP</string>
     <string name="play_button">Play</string>
     <string name="pause_button">Pause</string>
+    <string name="reset_button">Reset</string>
 </resources>

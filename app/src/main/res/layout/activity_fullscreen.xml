@@ -19,18 +19,25 @@
               android:text="@string/dummy_content"/>
 
     <Button android:id="@+id/play"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
+            android:layout_width="300dp"
+            android:layout_height="150dp"
             android:layout_gravity="center_horizontal"
             android:text="@string/play_button"/>
 
 
     <Button android:id="@+id/pause"
             android:visibility="gone"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
+            android:layout_width="300dp"
+            android:layout_height="150dp"
             android:layout_gravity="center_horizontal"
             android:text="@string/pause_button"/>
+
+    <Button android:id="@+id/reset"
+            android:layout_width="300dp"
+            android:layout_height="150dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="170dp"
+            android:text="@string/reset_button"/>
 
 
     <!-- This FrameLayout insets its children based on system windows using
