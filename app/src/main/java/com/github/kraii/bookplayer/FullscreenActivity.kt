@@ -4,11 +4,12 @@ import android.annotation.SuppressLint
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.os.Handler
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
-import android.view.View.*
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import kotlinx.android.synthetic.main.activity_fullscreen.*
 
 /**
@@ -30,6 +31,7 @@ class FullscreenActivity : AppCompatActivity() {
     private var mVisible: Boolean = false
     private val mHideRunnable = Runnable { hide() }
     private val mediaPlayer: MediaPlayer = MediaPlayer()
+    private var library : Library = emptyLibrary()
     /**
      * Touch listener to use for in-layout UI controls to delay hiding the
      * system UI. This is to prevent the jarring behavior of controls going away
@@ -56,12 +58,24 @@ class FullscreenActivity : AppCompatActivity() {
         // while interacting with the UI.
         dummy_button.setOnTouchListener(mDelayHideTouchListener)
 
-        val uri = Uri.parse(Environment.getExternalStorageDirectory().path + "/AudioBooks/not_a_book.mp3")
-        mediaPlayer.setDataSource(this, uri)
-        mediaPlayer.prepare()
         play.setOnClickListener(this::play)
         pause.setOnClickListener(this::pause)
         reset.setOnClickListener(this::reset)
+        forwardChapter.setOnClickListener(this::forwardChapter)
+        library = buildLibrary()
+        loadCurrentlySelectedBook()
+    }
+
+    private fun loadCurrentlySelectedBook() {
+        val selectedChapter = library.currentlySelected()
+        Log.i("yoi", "Loading $selectedChapter")
+        Log.i("yo", "Library $library")
+        if(selectedChapter != null) {
+            val uri = Uri.parse(selectedChapter.file.path)
+            mediaPlayer.reset()
+            mediaPlayer.setDataSource(this, uri)
+            mediaPlayer.prepare()
+        }
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -81,6 +95,16 @@ class FullscreenActivity : AppCompatActivity() {
     @Suppress("UNUSED_PARAMETER")
     private fun reset(view: View) {
         mediaPlayer.seekTo(0)
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun forwardChapter(view: View) {
+        val newChapter = library.selectNextChapter()
+        if(newChapter != null) {
+            play.visibility = VISIBLE
+            pause.visibility = GONE
+            loadCurrentlySelectedBook()
+        }
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
@@ -129,7 +153,7 @@ class FullscreenActivity : AppCompatActivity() {
     }
 
     /**
-     * Schedules a call to hide() in [delay] milliseconds, canceling any
+     * Schedules a call to hide() in [delayMillis] milliseconds, canceling any
      * previously scheduled calls.
      */
     private fun delayedHide(delayMillis: Int) {
