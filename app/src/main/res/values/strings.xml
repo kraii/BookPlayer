@@ -7,4 +7,6 @@
     <string name="pause_button">Pause</string>
     <string name="reset_button">Reset</string>
     <string name="forward_chapter_button">Next Chapter</string>
+
+    <string name="title_activity_library">LibraryActivity</string>
 </resources>

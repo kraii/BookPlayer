@@ -1,8 +1,7 @@
 package com.github.kraii.bookplayer
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Test
-
 import java.io.File
 
 class LibraryTest {
@@ -30,7 +29,18 @@ class LibraryTest {
         assertEquals("5.mp3", nameOf(library.currentlySelected()))
     }
 
-    private fun nameOf(chapter: Chapter?) : String {
+    @Test
+    fun libraryAsJson() {
+        library.selectNextChapter()
+        library.updateTimestamp(10)
+
+        val libraryRepository = LibraryRepository()
+        val json = libraryRepository.toJson(library)
+        val loadedLibrary = libraryRepository.fromJson(json)
+        assertEquals(library, loadedLibrary)
+    }
+
+    private fun nameOf(chapter: Chapter?): String {
         return chapter?.file?.name ?: "Nothing Selected :("
     }
 

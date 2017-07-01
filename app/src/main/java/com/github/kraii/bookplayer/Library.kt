@@ -8,11 +8,11 @@ fun buildLibrary(): Library {
     return Library(File(audioBooksDirectory))
 }
 
-fun emptyLibrary() : Library {
+fun emptyLibrary(): Library {
     return Library()
 }
 
-class Library  {
+class Library {
     val books: List<Book>
     private var selectedTitle: Book?
 
@@ -52,13 +52,36 @@ class Library  {
         selectedTitle = books.firstOrNull()
     }
 
-    fun selectNextChapter() : Chapter? {
-        if(selectedTitle == null) return null
+    fun selectNextChapter(): Chapter? {
+        if (selectedTitle == null) return null
         val book = selectedTitle!!
         return book.nextChapter()
     }
 
-    fun currentlySelected() : Chapter? {
+    fun currentlySelected(): Chapter? {
         return selectedTitle?.currentChapter()
     }
+
+    fun updateTimestamp(nowPlayingTimestamp: Int) {
+        selectedTitle?.setCurrentChapterTimestamp(nowPlayingTimestamp)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other?.javaClass != javaClass) return false
+
+        other as Library
+
+        if (books != other.books) return false
+        if (selectedTitle != other.selectedTitle) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = books.hashCode()
+        result = 31 * result + (selectedTitle?.hashCode() ?: 0)
+        return result
+    }
+
 }

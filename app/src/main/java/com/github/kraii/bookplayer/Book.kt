@@ -2,17 +2,21 @@ package com.github.kraii.bookplayer
 
 import java.io.File
 
-class Book(val author: String, val title: String, val chapters: List<Chapter>, var coverPath : String? = null) {
-    private var currentChapter : Int = 0
+data class Book(
+        val author: String,
+        val title: String,
+        val chapters: List<Chapter>,
+        var coverPath: String? = null
+) {
+    private var currentChapter: Int = 0
 
-    fun firstChapter() : Chapter {
-        return chapters.first()
-    }
+    fun firstChapter(): Chapter = chapters.first()
+    fun currentChapter(): Chapter = chapters[currentChapter]
 
     fun nextChapter(): Chapter? {
         assert(currentChapter >= 0)
         assert(currentChapter <= chapters.lastIndex)
-        if(currentChapter >= chapters.lastIndex)
+        if (currentChapter >= chapters.lastIndex)
             return null
         else {
             currentChapter++
@@ -20,30 +24,9 @@ class Book(val author: String, val title: String, val chapters: List<Chapter>, v
         }
     }
 
-    fun currentChapter(): Chapter {
-        return chapters[currentChapter]
+    fun setCurrentChapterTimestamp(timestamp: Int) {
+        currentChapter().currentTimestamp = timestamp
     }
 }
 
-class Chapter(val file: File) {
-    override fun toString(): String {
-        return "Chapter(file=$file)"
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other?.javaClass != javaClass) return false
-
-        other as Chapter
-
-        if (file.name != other.file.name) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return file.name.hashCode()
-    }
-
-
-}
+data class Chapter(val file: File, var currentTimestamp: Int = 0)

@@ -10,13 +10,9 @@ import android.util.Log
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import kotlinx.android.synthetic.main.activity_fullscreen.*
+import kotlinx.android.synthetic.main.activity_main_player.*
 
-/**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- */
-class FullscreenActivity : AppCompatActivity() {
+class MainPlayerActivity : AppCompatActivity() {
     private val mHideHandler = Handler()
     private val mHidePart2Runnable = Runnable {
         // Delayed removal of status and navigation bar
@@ -31,7 +27,8 @@ class FullscreenActivity : AppCompatActivity() {
     private var mVisible: Boolean = false
     private val mHideRunnable = Runnable { hide() }
     private val mediaPlayer: MediaPlayer = MediaPlayer()
-    private var library : Library = emptyLibrary()
+    private var library: Library = emptyLibrary()
+    private var libraryRepository: LibraryRepository = LibraryRepository()
     /**
      * Touch listener to use for in-layout UI controls to delay hiding the
      * system UI. This is to prevent the jarring behavior of controls going away
@@ -47,9 +44,9 @@ class FullscreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         verifyStoragePermissions(this)
-        setContentView(R.layout.activity_fullscreen)
+        setContentView(R.layout.activity_main_player)
         mVisible = true
-        
+
         // Set up the user interaction to manually show or hide the system UI.
         fullscreen_content!!.setOnClickListener { toggle() }
 
@@ -68,25 +65,30 @@ class FullscreenActivity : AppCompatActivity() {
 
     private fun loadCurrentlySelectedBook() {
         val selectedChapter = library.currentlySelected()
-        Log.i("yoi", "Loading $selectedChapter")
-        Log.i("yo", "Library $library")
-        if(selectedChapter != null) {
+        Log.i(LOG_TAG, "Loading $selectedChapter")
+        if (selectedChapter != null) {
             val uri = Uri.parse(selectedChapter.file.path)
+//            val metaData = MediaMetadataRetriever()
+//            metaData.setDataSource(this, uri)
+//            (1..20)
+//                    .map { metaData.extractMetadata(it) }
+//                    .forEach { Log.i("1123", "yoo $it") }
             mediaPlayer.reset()
             mediaPlayer.setDataSource(this, uri)
             mediaPlayer.prepare()
+            mediaPlayer.seekTo(selectedChapter.currentTimestamp)
         }
     }
 
     @Suppress("UNUSED_PARAMETER")
-    private fun play(view : View) {
+    private fun play(view: View) {
         mediaPlayer.start()
         play.visibility = GONE
         pause.visibility = VISIBLE
     }
 
     @Suppress("UNUSED_PARAMETER")
-    private fun pause(unused : View) {
+    private fun pause(unused: View) {
         mediaPlayer.pause()
         play.visibility = VISIBLE
         pause.visibility = GONE
@@ -100,7 +102,7 @@ class FullscreenActivity : AppCompatActivity() {
     @Suppress("UNUSED_PARAMETER")
     private fun forwardChapter(view: View) {
         val newChapter = library.selectNextChapter()
-        if(newChapter != null) {
+        if (newChapter != null) {
             play.visibility = VISIBLE
             pause.visibility = GONE
             loadCurrentlySelectedBook()
@@ -152,6 +154,17 @@ class FullscreenActivity : AppCompatActivity() {
         mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY.toLong())
     }
 
+    override fun onPause() {
+        super.onPause()
+        library.updateTimestamp(mediaPlayer.currentPosition)
+        libraryRepository.save(this, library)
+    }
+
+    override fun onRestart() {
+        library = libraryRepository.load(this)
+        loadCurrentlySelectedBook()
+    }
+
     /**
      * Schedules a call to hide() in [delayMillis] milliseconds, canceling any
      * previously scheduled calls.
@@ -179,5 +192,7 @@ class FullscreenActivity : AppCompatActivity() {
          * and a change of the status and navigation bar.
          */
         private val UI_ANIMATION_DELAY = 300
+
+        private val LOG_TAG = "MainActivity";
     }
 }
