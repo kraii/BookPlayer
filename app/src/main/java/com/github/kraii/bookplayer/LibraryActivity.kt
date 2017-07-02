@@ -35,7 +35,7 @@ class LibraryActivity : AppCompatActivity() {
      * system UI. This is to prevent the jarring behavior of controls going away
      * while interacting with activity UI.
      */
-    private val mDelayHideTouchListener = View.OnTouchListener { view, motionEvent ->
+    private val mDelayHideTouchListener = View.OnTouchListener { _, _ ->
         if (AUTO_HIDE) {
             delayedHide(AUTO_HIDE_DELAY_MILLIS)
         }

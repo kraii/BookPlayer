@@ -35,17 +35,22 @@ class Library {
     internal constructor(rootOfLibrary: File) {
         val bookBuilder: MutableList<Book> = mutableListOf()
         var chapters: MutableList<Chapter> = mutableListOf()
+        var cover: File? = null
         val walk = rootOfLibrary.walk()
                 .onLeave { file ->
                     if (chapters.isNotEmpty()) {
                         val (author, title) = parseDirName(file)
-                        bookBuilder.add(Book(author, title, chapters.toList().sortedBy { it.file.name }))
+                        val sortedChapters = chapters.toList().sortedBy { it.file.name }
+                        bookBuilder.add(Book(author, title, sortedChapters, cover))
                         chapters = mutableListOf()
+                        cover = null
                     }
                 }
         for (file in walk) {
             if (file.isFile && file.name.endsWith(".mp3", true)) {
                 chapters.add(Chapter(file))
+            } else if(file.isFile && file.name == "cover.jpg") {
+                cover = file
             }
         }
         books = bookBuilder.toList()

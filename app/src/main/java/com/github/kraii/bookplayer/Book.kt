@@ -6,9 +6,9 @@ data class Book(
         val author: String,
         val title: String,
         val chapters: List<Chapter>,
-        var coverPath: String? = null
+        var cover: File? = null
 ) {
-    private var currentChapter: Int = 0
+    var currentChapter: Int = 0
 
     fun firstChapter(): Chapter = chapters.first()
     fun currentChapter(): Chapter = chapters[currentChapter]

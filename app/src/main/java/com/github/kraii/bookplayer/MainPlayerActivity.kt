@@ -59,7 +59,7 @@ class MainPlayerActivity : AppCompatActivity() {
         pause.setOnClickListener(this::pause)
         reset.setOnClickListener(this::reset)
         forwardChapter.setOnClickListener(this::forwardChapter)
-        library = buildLibrary()
+        library = libraryRepository.load(this)
         loadCurrentlySelectedBook()
     }
 
@@ -120,6 +120,7 @@ class MainPlayerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         mediaPlayer.stop()
+        libraryRepository.save(this, library)
         super.onDestroy()
     }
 
@@ -161,6 +162,7 @@ class MainPlayerActivity : AppCompatActivity() {
     }
 
     override fun onRestart() {
+        super.onRestart()
         library = libraryRepository.load(this)
         loadCurrentlySelectedBook()
     }
