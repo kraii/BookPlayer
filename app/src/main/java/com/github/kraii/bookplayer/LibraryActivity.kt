@@ -6,7 +6,7 @@ import android.support.v7.app.AppCompatActivity
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
 
-class LibraryActivity : AppCompatActivity() {
+class LibraryActivity : AppCompatActivity(), AnkoLogger {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -14,9 +14,11 @@ class LibraryActivity : AppCompatActivity() {
     }
 
     fun libraryRefresh() {
+        info("refresh started")
         val newlyScanned : Library = buildLibrary()
         LibraryHolder.updateFrom(newlyScanned)
         LibraryHolder.save(ctx)
+        info("library built ${LibraryHolder.get()}")
     }
 }
 
@@ -27,6 +29,10 @@ class LibraryActivityUi : AnkoComponent<LibraryActivity> {
 
             button("Refresh Library") {
                 onClick { owner.libraryRefresh() }
+                textSize = 30f
+            }.lparams(width = wrapContent) {
+                horizontalMargin = dip(5)
+                topMargin = dip(10)
             }
         }
     }.view

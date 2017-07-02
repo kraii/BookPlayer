@@ -2,13 +2,14 @@ package com.github.kraii.bookplayer
 
 import java.io.File
 
+data class AuthorTitle(val author: String, val title: String)
+
 data class Book(
-        val author: String,
-        val title: String,
+        val authorTitle: AuthorTitle,
         val chapters: List<Chapter>,
-        var cover: File? = null
+        var cover: File? = null,
+        var currentChapter: Int = 0
 ) {
-    var currentChapter: Int = 0
 
     fun firstChapter(): Chapter = chapters.first()
     fun currentChapter(): Chapter = chapters[currentChapter]
@@ -29,6 +30,12 @@ data class Book(
         set(value) {
             currentChapter().currentTimestamp = value
         }
+
+    val author: String
+        get() = authorTitle.author
+
+    val title: String
+        get() = authorTitle.title
 }
 
 data class Chapter(val file: File, var currentTimestamp: Int = 0)

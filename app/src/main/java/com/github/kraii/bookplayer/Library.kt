@@ -2,7 +2,8 @@ package com.github.kraii.bookplayer
 
 import android.content.Context
 import android.os.Environment
-import org.jetbrains.anko.AnkoContext
+import org.jetbrains.anko.AnkoLogger
+import org.jetbrains.anko.info
 import java.io.File
 
 fun buildLibrary(): Library {
@@ -14,16 +15,18 @@ fun emptyLibrary(): Library {
     return Library()
 }
 
-object LibraryHolder {
+object LibraryHolder : AnkoLogger {
     private val repository : LibraryRepository = LibraryRepository()
     private var library: Library = emptyLibrary()
 
     fun save(context: Context) {
         repository.save(context, library)
+        info("Saved $library")
     }
 
     fun load(context: Context) {
         library = repository.load(context)
+        info("Loaded $library")
     }
 
     fun get(): Library {
@@ -31,29 +34,34 @@ object LibraryHolder {
     }
 
     fun updateFrom(newlyScanned: Library) {
-        newlyScanned.mergeWith(library)
+//        newlyScanned.mergeWith(library)
         library = newlyScanned
     }
 }
 
-class Library {
+class Library : AnkoLogger {
     val books: List<Book>
     private var selectedTitle: Book?
 
-    private fun parseDirName(file: File): Pair<String, String> {
+    private fun parseDirName(file: File): AuthorTitle {
         val split: List<String> = file.name.replace("_", " ").split("-")
         val title = split.firstOrNull() ?: ""
         val author = if (split.size > 1) split[1] else ""
-        return Pair(author, title)
+        return AuthorTitle(author, title)
     }
 
     override fun toString(): String {
-        return "Library(books=$books)"
+        return "Library(selectedTitle=$selectedTitle, books=$books)"
     }
 
     internal constructor() {
         books = emptyList()
         selectedTitle = null
+    }
+
+    internal constructor(books: List<Book>, selectedTitle: AuthorTitle?) {
+        this.books = books
+        this.selectedTitle = selectedTitle?.let { findMatching(it) }
     }
 
     internal constructor(rootOfLibrary: File) {
@@ -63,14 +71,15 @@ class Library {
         val walk = rootOfLibrary.walk()
                 .onLeave { file ->
                     if (chapters.isNotEmpty()) {
-                        val (author, title) = parseDirName(file)
+                        val authorTitle = parseDirName(file)
                         val sortedChapters = chapters.toList().sortedBy { it.file.name }
-                        bookBuilder.add(Book(author, title, sortedChapters, cover))
+                        bookBuilder.add(Book(authorTitle, sortedChapters, cover))
                         chapters = mutableListOf()
                         cover = null
                     }
                 }
         for (file in walk) {
+            info("Walking through file $file")
             if (file.isFile && file.name.endsWith(".mp3", true)) {
                 chapters.add(Chapter(file))
             } else if(file.isFile && file.name == "cover.jpg") {
@@ -114,18 +123,16 @@ class Library {
         return result
     }
 
-    fun findMatching(book: Book) : Book? = books.find { it.author == book.author && it.title == book.title }
+    fun findMatching(book: AuthorTitle) : Book? = books.find { it.author == book.author && it.title == book.title }
 
-
-    fun mergeWith(existing: Library) {
+    fun mergeWith(other: Library) {
         books.forEach { book ->
-            val existingBook = existing.findMatching(book)
-            existingBook?.let {
+            val matchingBook = other.findMatching(book.authorTitle)
+            matchingBook?.let {
                 book.currentChapter = it.currentChapter
                 book.currentChapterTimestamp = it.currentChapterTimestamp
             }
         }
-        selectedTitle = existing.selectedTitle()
+        selectedTitle = other.selectedTitle()
     }
-
 }

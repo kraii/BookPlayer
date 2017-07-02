@@ -62,12 +62,21 @@ class MainPlayerActivity : AppCompatActivity() {
         browseLibrary.setOnClickListener(this::openLibrary)
         LibraryHolder.load(ctx)
         loadCurrentlySelectedBook()
+        mediaPlayer.setOnErrorListener({_,_,_ ->
+            Log.i(LOG_TAG, "Media player error received, resetting")
+            mediaPlayer.reset()
+            loadCurrentlySelectedBook()
+            showPlay()
+            true
+        })
     }
+
 
     private fun loadCurrentlySelectedBook() {
         val selectedChapter = LibraryHolder.get().currentlySelected()
         Log.i(LOG_TAG, "Loading $selectedChapter")
-        if (selectedChapter != null) {
+
+        if (selectedChapter != null && selectedChapter.file.exists()) {
             val uri = Uri.parse(selectedChapter.file.path)
             mediaPlayer.reset()
             mediaPlayer.setDataSource(this, uri)
@@ -79,6 +88,10 @@ class MainPlayerActivity : AppCompatActivity() {
     @Suppress("UNUSED_PARAMETER")
     private fun play(view: View) {
         mediaPlayer.start()
+        showPause()
+    }
+
+    private fun showPause() {
         play.visibility = GONE
         pause.visibility = VISIBLE
     }
@@ -86,8 +99,7 @@ class MainPlayerActivity : AppCompatActivity() {
     @Suppress("UNUSED_PARAMETER")
     private fun pause(unused: View) {
         mediaPlayer.pause()
-        play.visibility = VISIBLE
-        pause.visibility = GONE
+        showPlay()
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -99,10 +111,14 @@ class MainPlayerActivity : AppCompatActivity() {
     private fun forwardChapter(view: View) {
         val newChapter = LibraryHolder.get().selectNextChapter()
         if (newChapter != null) {
-            play.visibility = VISIBLE
-            pause.visibility = GONE
+            showPlay()
             loadCurrentlySelectedBook()
         }
+    }
+
+    private fun showPlay() {
+        play.visibility = VISIBLE
+        pause.visibility = GONE
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -165,6 +181,11 @@ class MainPlayerActivity : AppCompatActivity() {
         super.onRestart()
         LibraryHolder.load(ctx)
         loadCurrentlySelectedBook()
+        if(mediaPlayer.isPlaying) {
+            showPause()
+        } else {
+            showPlay()
+        }
     }
 
     /**
