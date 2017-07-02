@@ -24,9 +24,11 @@ data class Book(
         }
     }
 
-    fun setCurrentChapterTimestamp(timestamp: Int) {
-        currentChapter().currentTimestamp = timestamp
-    }
+    var currentChapterTimestamp: Int
+        get() = currentChapter().currentTimestamp
+        set(value) {
+            currentChapter().currentTimestamp = value
+        }
 }
 
 data class Chapter(val file: File, var currentTimestamp: Int = 0)

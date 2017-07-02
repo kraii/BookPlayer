@@ -1,6 +1,8 @@
 package com.github.kraii.bookplayer
 
+import android.content.Context
 import android.os.Environment
+import org.jetbrains.anko.AnkoContext
 import java.io.File
 
 fun buildLibrary(): Library {
@@ -10,6 +12,28 @@ fun buildLibrary(): Library {
 
 fun emptyLibrary(): Library {
     return Library()
+}
+
+object LibraryHolder {
+    private val repository : LibraryRepository = LibraryRepository()
+    private var library: Library = emptyLibrary()
+
+    fun save(context: Context) {
+        repository.save(context, library)
+    }
+
+    fun load(context: Context) {
+        library = repository.load(context)
+    }
+
+    fun get(): Library {
+        return library
+    }
+
+    fun updateFrom(newlyScanned: Library) {
+        newlyScanned.mergeWith(library)
+        library = newlyScanned
+    }
 }
 
 class Library {
@@ -57,10 +81,11 @@ class Library {
         selectedTitle = books.firstOrNull()
     }
 
-    fun selectNextChapter(): Chapter? {
-        if (selectedTitle == null) return null
-        val book = selectedTitle!!
-        return book.nextChapter()
+    fun selectNextChapter(): Chapter? = selectedTitle?.nextChapter()
+
+
+    fun selectedTitle() : Book? {
+        return selectedTitle
     }
 
     fun currentlySelected(): Chapter? {
@@ -68,7 +93,7 @@ class Library {
     }
 
     fun updateTimestamp(nowPlayingTimestamp: Int) {
-        selectedTitle?.setCurrentChapterTimestamp(nowPlayingTimestamp)
+        selectedTitle?.currentChapterTimestamp = nowPlayingTimestamp
     }
 
     override fun equals(other: Any?): Boolean {
@@ -87,6 +112,20 @@ class Library {
         var result = books.hashCode()
         result = 31 * result + (selectedTitle?.hashCode() ?: 0)
         return result
+    }
+
+    fun findMatching(book: Book) : Book? = books.find { it.author == book.author && it.title == book.title }
+
+
+    fun mergeWith(existing: Library) {
+        books.forEach { book ->
+            val existingBook = existing.findMatching(book)
+            existingBook?.let {
+                book.currentChapter = it.currentChapter
+                book.currentChapterTimestamp = it.currentChapterTimestamp
+            }
+        }
+        selectedTitle = existing.selectedTitle()
     }
 
 }

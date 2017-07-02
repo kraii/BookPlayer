@@ -26,6 +26,13 @@
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
 
+        <Button
+            android:id="@+id/refresh"
+            android:layout_width="300dp"
+            android:layout_height="150dp"
+            android:layout_gravity="center_horizontal"
+            android:text="@string/refresh_button"/>
+
         <LinearLayout
             android:id="@+id/fullscreen_content_controls"
             style="?metaButtonBarStyle"

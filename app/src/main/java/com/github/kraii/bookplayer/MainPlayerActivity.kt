@@ -11,6 +11,8 @@ import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import kotlinx.android.synthetic.main.activity_main_player.*
+import org.jetbrains.anko.ctx
+import org.jetbrains.anko.startActivity
 
 class MainPlayerActivity : AppCompatActivity() {
     private val mHideHandler = Handler()
@@ -27,8 +29,6 @@ class MainPlayerActivity : AppCompatActivity() {
     private var mVisible: Boolean = false
     private val mHideRunnable = Runnable { hide() }
     private val mediaPlayer: MediaPlayer = MediaPlayer()
-    private var library: Library = emptyLibrary()
-    private var libraryRepository: LibraryRepository = LibraryRepository()
     /**
      * Touch listener to use for in-layout UI controls to delay hiding the
      * system UI. This is to prevent the jarring behavior of controls going away
@@ -59,20 +59,16 @@ class MainPlayerActivity : AppCompatActivity() {
         pause.setOnClickListener(this::pause)
         reset.setOnClickListener(this::reset)
         forwardChapter.setOnClickListener(this::forwardChapter)
-        library = libraryRepository.load(this)
+        browseLibrary.setOnClickListener(this::openLibrary)
+        LibraryHolder.load(ctx)
         loadCurrentlySelectedBook()
     }
 
     private fun loadCurrentlySelectedBook() {
-        val selectedChapter = library.currentlySelected()
+        val selectedChapter = LibraryHolder.get().currentlySelected()
         Log.i(LOG_TAG, "Loading $selectedChapter")
         if (selectedChapter != null) {
             val uri = Uri.parse(selectedChapter.file.path)
-//            val metaData = MediaMetadataRetriever()
-//            metaData.setDataSource(this, uri)
-//            (1..20)
-//                    .map { metaData.extractMetadata(it) }
-//                    .forEach { Log.i("1123", "yoo $it") }
             mediaPlayer.reset()
             mediaPlayer.setDataSource(this, uri)
             mediaPlayer.prepare()
@@ -101,13 +97,17 @@ class MainPlayerActivity : AppCompatActivity() {
 
     @Suppress("UNUSED_PARAMETER")
     private fun forwardChapter(view: View) {
-        val newChapter = library.selectNextChapter()
+        val newChapter = LibraryHolder.get().selectNextChapter()
         if (newChapter != null) {
             play.visibility = VISIBLE
             pause.visibility = GONE
             loadCurrentlySelectedBook()
         }
     }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun openLibrary(view: View) = startActivity<LibraryActivity>()
+
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
@@ -120,7 +120,7 @@ class MainPlayerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         mediaPlayer.stop()
-        libraryRepository.save(this, library)
+        LibraryHolder.save(ctx)
         super.onDestroy()
     }
 
@@ -157,13 +157,13 @@ class MainPlayerActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        library.updateTimestamp(mediaPlayer.currentPosition)
-        libraryRepository.save(this, library)
+        LibraryHolder.get().updateTimestamp(mediaPlayer.currentPosition)
+        LibraryHolder.save(ctx)
     }
 
     override fun onRestart() {
         super.onRestart()
-        library = libraryRepository.load(this)
+        LibraryHolder.load(ctx)
         loadCurrentlySelectedBook()
     }
 
@@ -195,6 +195,7 @@ class MainPlayerActivity : AppCompatActivity() {
          */
         private val UI_ANIMATION_DELAY = 300
 
-        private val LOG_TAG = "MainActivity";
+        private val LOG_TAG = "MainActivity"
     }
 }
+

@@ -11,13 +11,8 @@ internal class FileJsonAdapter : JsonAdapter<File>() {
 
     override fun fromJson(reader: JsonReader): File? {
         val path = reader.nextString()
-        if (path == null) {
-            return null
-        } else {
-            return File(path)
-        }
+        return path?.let { File(it) }
     }
-
 }
 
 class LibraryRepository {

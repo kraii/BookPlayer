@@ -52,14 +52,13 @@
         android:layout_marginTop="340dp"
         android:text="@string/forward_chapter_button"/>
 
-    <ProgressBar
-        android:id="@+id/indeterminateBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="visible"
-        android:layout_gravity="center"
-        />
-
+    <Button
+        android:id="@+id/browseLibrary"
+        android:layout_width="300dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="340dp"
+        android:text="@string/browse_library_button"/>
 
     <!-- This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows. -->
