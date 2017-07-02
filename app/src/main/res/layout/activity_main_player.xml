@@ -60,6 +60,12 @@
         android:layout_marginTop="340dp"
         android:text="@string/browse_library_button"/>
 
+    <ImageView
+        android:id="@+id/bookCover"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="600dp" />
+
     <!-- This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows. -->
     <FrameLayout

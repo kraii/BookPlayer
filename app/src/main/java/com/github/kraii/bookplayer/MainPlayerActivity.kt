@@ -1,6 +1,8 @@
 package com.github.kraii.bookplayer
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
@@ -73,7 +75,8 @@ class MainPlayerActivity : AppCompatActivity() {
 
 
     private fun loadCurrentlySelectedBook() {
-        val selectedChapter = LibraryHolder.get().currentlySelected()
+        val selectedTitle = LibraryHolder.get().selectedTitle()
+        val selectedChapter = selectedTitle?.currentChapter()
         Log.i(LOG_TAG, "Loading $selectedChapter")
 
         if (selectedChapter != null && selectedChapter.file.exists()) {
@@ -82,6 +85,10 @@ class MainPlayerActivity : AppCompatActivity() {
             mediaPlayer.setDataSource(this, uri)
             mediaPlayer.prepare()
             mediaPlayer.seekTo(selectedChapter.currentTimestamp)
+
+            if(selectedTitle.cover?.exists() ?: false) {
+                bookCover.setImageBitmap(BitmapFactory.decodeFile(selectedTitle.cover?.path))
+            }
         }
     }
 
