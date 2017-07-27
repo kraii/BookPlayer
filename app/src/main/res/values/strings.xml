@@ -10,4 +10,5 @@
     <string name="refresh_button">Refresh Library</string>
     <string name="browse_library_button">Browse Library</string>
     <string name="title_activity_library">LibraryActivity</string>
+    <string name="book_cover">Book Cover</string>
 </resources>

@@ -2,8 +2,6 @@ package com.github.kraii.bookplayer
 
 import android.content.Context
 import android.os.Environment
-import org.jetbrains.anko.AnkoLogger
-import org.jetbrains.anko.info
 import java.io.File
 
 fun buildLibrary(): Library {
@@ -15,18 +13,16 @@ fun emptyLibrary(): Library {
     return Library()
 }
 
-object LibraryHolder : AnkoLogger {
+object LibraryHolder {
     private val repository : LibraryRepository = LibraryRepository()
     private var library: Library = emptyLibrary()
 
     fun save(context: Context) {
         repository.save(context, library)
-        info("Saved $library")
     }
 
     fun load(context: Context) {
         library = repository.load(context)
-        info("Loaded $library")
     }
 
     fun get(): Library {
@@ -34,12 +30,11 @@ object LibraryHolder : AnkoLogger {
     }
 
     fun updateFrom(newlyScanned: Library) {
-//        newlyScanned.mergeWith(library)
         library = newlyScanned
     }
 }
 
-class Library : AnkoLogger {
+class Library {
     val books: List<Book>
     private var selectedTitle: Book?
 
@@ -79,7 +74,7 @@ class Library : AnkoLogger {
                     }
                 }
         for (file in walk) {
-            info("Walking through file $file")
+//            info("Walking through file $file")
             if (file.isFile && file.name.endsWith(".mp3", true)) {
                 chapters.add(Chapter(file))
             } else if(file.isFile && file.name == "cover.jpg") {
@@ -134,5 +129,20 @@ class Library : AnkoLogger {
             }
         }
         selectedTitle = other.selectedTitle()
+    }
+
+    fun selectNextTitle() {
+        val currentSelectedTitle = selectedTitle
+        if(currentSelectedTitle == null) {
+            if(books.isNotEmpty()) selectedTitle = books.first()
+        } else {
+            val currentBookIndex = books.indexOf(selectedTitle)
+            if(currentBookIndex + 1 >= books.size) {
+                // wrap around to start
+                selectedTitle = books.first()
+            } else {
+                selectedTitle = books[currentBookIndex + 1]
+            }
+        }
     }
 }

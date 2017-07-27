@@ -33,6 +33,20 @@ class LibraryTest {
     }
 
     @Test
+    fun selectsNextTitle() {
+        val libraryWith2Books = buildLibrary("1984-George Orwell", 10)
+        libraryWith2Books.selectNextChapter()
+
+        libraryWith2Books.selectNextTitle()
+        assertEquals("1984", libraryWith2Books.selectedTitle()?.title)
+        assertEquals("1.mp3", nameOf(libraryWith2Books.currentlySelected()))
+
+        libraryWith2Books.selectNextTitle()
+        assertEquals("Animal Farm", libraryWith2Books.selectedTitle()?.title)
+        assertEquals("should still have the same chapter selected", "2.mp3", nameOf(libraryWith2Books.currentlySelected()))
+    }
+
+    @Test
     fun libraryAsJson() {
         library.selectNextChapter()
         library.updateTimestamp(10)

@@ -1,7 +1,6 @@
 package com.github.kraii.bookplayer
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaPlayer
 import android.net.Uri
@@ -73,7 +72,6 @@ class MainPlayerActivity : AppCompatActivity() {
         })
     }
 
-
     private fun loadCurrentlySelectedBook() {
         val selectedTitle = LibraryHolder.get().selectedTitle()
         val selectedChapter = selectedTitle?.currentChapter()
@@ -128,8 +126,12 @@ class MainPlayerActivity : AppCompatActivity() {
         pause.visibility = GONE
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun openLibrary(view: View) = startActivity<LibraryActivity>()
+    private fun openLibrary(view: View) {
+        if(mediaPlayer.isPlaying) {
+            pause(view)
+        }
+        startActivity<LibraryActivity>()
+    }
 
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
