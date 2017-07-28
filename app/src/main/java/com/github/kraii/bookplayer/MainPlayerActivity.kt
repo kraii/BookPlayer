@@ -58,7 +58,6 @@ class MainPlayerActivity : AppCompatActivity() {
 
         play.setOnClickListener(this::play)
         pause.setOnClickListener(this::pause)
-        reset.setOnClickListener(this::reset)
         forwardChapter.setOnClickListener(this::forwardChapter)
         browseLibrary.setOnClickListener(this::openLibrary)
         LibraryHolder.load(ctx)
@@ -105,11 +104,6 @@ class MainPlayerActivity : AppCompatActivity() {
     private fun pause(unused: View) {
         mediaPlayer.pause()
         showPlay()
-    }
-
-    @Suppress("UNUSED_PARAMETER")
-    private fun reset(view: View) {
-        mediaPlayer.seekTo(0)
     }
 
     @Suppress("UNUSED_PARAMETER")

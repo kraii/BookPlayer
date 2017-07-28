@@ -88,9 +88,8 @@ class Library {
         this.selectedTitle = books.firstOrNull()
     }
 
-
     fun selectNextChapter(): Chapter? = selectedTitle?.nextChapter()
-
+    fun selectPreviousChapter(): Chapter? = selectedTitle?.previousChapter()
 
     fun selectedTitle() : Book? {
         return selectedTitle

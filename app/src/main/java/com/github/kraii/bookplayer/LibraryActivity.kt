@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.ImageView
+import android.widget.TextView
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
 
@@ -17,7 +18,7 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         libraryActivityUi.setContentView(this)
-        updateCover()
+        updateDisplay()
     }
 
     fun libraryRefresh() {
@@ -29,27 +30,54 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
     }
 
 
-    fun updateCover() {
+    fun updateDisplay() {
         val selectedTitle = LibraryHolder.get().selectedTitle()
-        if(selectedTitle?.cover?.exists() ?: false) {
-            libraryActivityUi.bookCover?.setImageBitmap(BitmapFactory.decodeFile(selectedTitle?.cover?.path))
+        if(selectedTitle != null) {
+            libraryActivityUi.bookCover?.imageBitmap = BitmapFactory.decodeFile(selectedTitle.cover?.path)
+            updateChapterDisplay()
+        }
+    }
+
+    fun updateChapterDisplay() {
+        val selectedTitle = LibraryHolder.get().selectedTitle()
+        if(selectedTitle != null) {
+            libraryActivityUi.currentChapter?.text = "Current Chapter ${selectedTitle.currentChapter + 1} / ${selectedTitle.totalChapters}"
         }
     }
 
     fun cycleNextBook() {
         LibraryHolder.get().selectNextTitle()
-        updateCover()
+        updateDisplay()
     }
 
     fun cyclePreviousBook() {
         LibraryHolder.get().selectPreviousTitle()
-        updateCover()
+        updateDisplay()
+    }
+
+    fun toStartOfSelectedBook() {
+        val selectedTitle = LibraryHolder.get().selectedTitle()
+        if(selectedTitle != null) {
+            selectedTitle.currentChapterTimestamp = 0
+            selectedTitle.currentChapter = 0
+            updateChapterDisplay()
+        }
+    }
+
+    fun nextChapter() {
+        LibraryHolder.get().selectNextChapter()
+        updateChapterDisplay()
+    }
+
+    fun previousChapter() {
+        LibraryHolder.get().selectPreviousChapter()
+        updateChapterDisplay()
     }
 }
 
 class LibraryActivityUi : AnkoComponent<LibraryActivity> {
-
     var bookCover : ImageView? = null
+    var currentChapter : TextView? = null
 
     override fun createView(ui: AnkoContext<LibraryActivity>) = ui.apply {
         verticalLayout {
@@ -62,14 +90,16 @@ class LibraryActivityUi : AnkoComponent<LibraryActivity> {
                 horizontalMargin = dip(5)
                 topMargin = dip(10)
             }
-            button("Next") {
+
+            button("Next Book") {
                 onClick { owner.cycleNextBook() }
                 textSize = 30f
             }.lparams(width = wrapContent) {
                 horizontalMargin = dip(5)
                 topMargin = dip(10)
             }
-            button("Previous") {
+
+            button("Previous Book") {
                 onClick { owner.cyclePreviousBook() }
                 textSize = 30f
             }.lparams(width = wrapContent) {
@@ -77,8 +107,38 @@ class LibraryActivityUi : AnkoComponent<LibraryActivity> {
                 topMargin = dip(10)
             }
 
+            button("Next Chapter") {
+                onClick { owner.nextChapter() }
+                textSize = 30f
+            }.lparams(width = wrapContent) {
+                horizontalMargin = dip(5)
+                topMargin = dip(10)
+            }
+
+            button("Previous Chapter") {
+                onClick { owner.previousChapter() }
+                textSize = 30f
+            }.lparams(width = wrapContent) {
+                horizontalMargin = dip(5)
+                topMargin = dip(10)
+            }
+
+            button("Back to start of book") {
+                onClick { owner.toStartOfSelectedBook() }
+            }.lparams(width = wrapContent) {
+                horizontalMargin = dip(5)
+                topMargin = dip(10)
+            }
+
             bookCover = imageView {
                 contentDescription = "Le book cover"
+            }.lparams(width = wrapContent, height = wrapContent) {
+                horizontalMargin = dip(5)
+                topMargin = dip(10)
+            }
+
+            currentChapter = textView("Current Chapter: - / -"){
+                textSize = 30f
             }.lparams(width = wrapContent, height = wrapContent) {
                 horizontalMargin = dip(5)
                 topMargin = dip(10)

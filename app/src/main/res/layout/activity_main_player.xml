@@ -37,14 +37,6 @@
         android:text="@string/pause_button"/>
 
     <Button
-        android:id="@+id/reset"
-        android:layout_width="300dp"
-        android:layout_height="150dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="170dp"
-        android:text="@string/reset_button"/>
-
-    <Button
         android:id="@+id/forwardChapter"
         android:layout_width="300dp"
         android:layout_height="150dp"

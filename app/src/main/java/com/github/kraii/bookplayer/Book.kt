@@ -25,6 +25,17 @@ data class Book (
         }
     }
 
+    fun previousChapter(): Chapter? {
+        assert(currentChapter >= 0)
+        assert(currentChapter <= chapters.lastIndex)
+        if (currentChapter <= 0)
+            return null
+        else {
+            currentChapter--
+            return chapters[currentChapter]
+        }
+    }
+
     var currentChapterTimestamp: Int
         get() = currentChapter().currentTimestamp
         set(value) {
@@ -36,6 +47,10 @@ data class Book (
 
     val title: String
         get() = authorTitle.title
+
+    val totalChapters: Int
+        get() = chapters.size
+
 }
 
 data class Chapter(val file: File, var currentTimestamp: Int = 0)
