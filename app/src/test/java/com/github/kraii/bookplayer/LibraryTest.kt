@@ -28,7 +28,7 @@ class LibraryTest {
         newlyScannedLibrary.mergeWith(library)
 
         assertEquals(2, newlyScannedLibrary.books.size)
-        val selectedTitle : Book? = newlyScannedLibrary.selectedTitle()
+        val selectedTitle: Book? = newlyScannedLibrary.selectedTitle()
         assertEquals("Animal Farm", selectedTitle?.title)
         assertEquals(1, selectedTitle?.currentChapter)
         assertEquals(2000, selectedTitle?.currentChapterTimestamp)
@@ -49,30 +49,36 @@ class LibraryTest {
 
     @Test
     fun selectsNextTitle() {
-        val libraryWith2Books = buildLibrary("1984-George Orwell", 10)
+        val libraryWith2Books = Library(listOf(
+                Book(AuthorTitle("Eric", "Animal Farm"), listOf(Chapter(File("Start")), Chapter(File("Pigs")))),
+                Book(AuthorTitle("Eric", "1984"), listOf(Chapter(File("Start"))))
+        ))
         libraryWith2Books.selectNextChapter()
 
         libraryWith2Books.selectNextTitle()
         assertEquals("1984", libraryWith2Books.selectedTitle()?.title)
-        assertEquals("1.mp3", nameOf(libraryWith2Books.currentlySelected()))
+        assertEquals("Start", nameOf(libraryWith2Books.currentlySelected()))
 
         libraryWith2Books.selectNextTitle()
         assertEquals("Animal Farm", libraryWith2Books.selectedTitle()?.title)
-        assertEquals("should still have the same chapter selected", "2.mp3", nameOf(libraryWith2Books.currentlySelected()))
+        assertEquals("should still have the same chapter selected", "Pigs", nameOf(libraryWith2Books.currentlySelected()))
     }
 
     @Test
     fun selectsPreviousTitle() {
-        val libraryWith2Books = buildLibrary("Harry Potter and the Goblet of Fire-J.K. Rowling", 2)
+        val libraryWith2Books = Library(listOf(
+                Book(AuthorTitle("Eric", "Animal Farm"), listOf(Chapter(File("Start")), Chapter(File("Pigs")))),
+                Book(AuthorTitle("J.K Rowling", "Harry Potter and the Goblet of Fire"), listOf(Chapter(File("Wizards"))))
+        ))
         libraryWith2Books.selectNextChapter()
 
         libraryWith2Books.selectPreviousTitle()
         assertEquals("Harry", libraryWith2Books.selectedTitle()?.title?.subSequence(0..4))
-        assertEquals("1.mp3", nameOf(libraryWith2Books.currentlySelected()))
+        assertEquals("Wizards", nameOf(libraryWith2Books.currentlySelected()))
 
         libraryWith2Books.selectPreviousTitle()
         assertEquals("Animal Farm", libraryWith2Books.selectedTitle()?.title)
-        assertEquals("should still have the same chapter selected", "2.mp3", nameOf(libraryWith2Books.currentlySelected()))
+        assertEquals("should still have the same chapter selected", "Pigs", nameOf(libraryWith2Books.currentlySelected()))
     }
 
     @Test

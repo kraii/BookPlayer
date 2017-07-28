@@ -4,7 +4,7 @@ import java.io.File
 
 data class AuthorTitle(val author: String, val title: String)
 
-data class Book(
+data class Book (
         val authorTitle: AuthorTitle,
         val chapters: List<Chapter>,
         var cover: File? = null,
