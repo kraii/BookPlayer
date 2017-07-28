@@ -4,9 +4,40 @@ import android.content.Context
 import android.os.Environment
 import java.io.File
 
-fun buildLibrary(): Library {
+fun buildLibrary() : Library {
     val audioBooksDirectory = Environment.getExternalStorageDirectory().path + "/AudioBooks"
-    return Library(File(audioBooksDirectory))
+    return buildLibrary(File(audioBooksDirectory))
+}
+
+fun buildLibrary(audioBooksDirectory: File): Library {
+    val bookBuilder: MutableList<Book> = mutableListOf()
+    var chapters: MutableList<Chapter> = mutableListOf()
+    var cover: File? = null
+    val walk = audioBooksDirectory.walk()
+            .onLeave { file ->
+                if (chapters.isNotEmpty()) {
+                    val authorTitle = parseDirName(file)
+                    val sortedChapters = chapters.toList().sortedBy { it.file.name }
+                    bookBuilder.add(Book(authorTitle, sortedChapters, cover))
+                    chapters = mutableListOf()
+                    cover = null
+                }
+            }
+    for (file in walk) {
+        if (file.isFile && file.name.endsWith(".mp3", true)) {
+            chapters.add(Chapter(file))
+        } else if(file.isFile && file.name == "cover.jpg") {
+            cover = file
+        }
+    }
+    return Library(bookBuilder.toList())
+}
+
+private fun parseDirName(file: File): AuthorTitle {
+    val split: List<String> = file.name.replace("_", " ").split("-")
+    val title = split.firstOrNull() ?: ""
+    val author = if (split.size > 1) split[1] else ""
+    return AuthorTitle(author, title)
 }
 
 fun emptyLibrary(): Library {
@@ -35,15 +66,8 @@ object LibraryHolder {
 }
 
 class Library {
-    val books: List<Book>
+    internal val books: List<Book>
     private var selectedTitle: Book?
-
-    private fun parseDirName(file: File): AuthorTitle {
-        val split: List<String> = file.name.replace("_", " ").split("-")
-        val title = split.firstOrNull() ?: ""
-        val author = if (split.size > 1) split[1] else ""
-        return AuthorTitle(author, title)
-    }
 
     override fun toString(): String {
         return "Library(selectedTitle=$selectedTitle, books=$books)"
@@ -59,31 +83,11 @@ class Library {
         this.selectedTitle = selectedTitle?.let { findMatching(it) }
     }
 
-    internal constructor(rootOfLibrary: File) {
-        val bookBuilder: MutableList<Book> = mutableListOf()
-        var chapters: MutableList<Chapter> = mutableListOf()
-        var cover: File? = null
-        val walk = rootOfLibrary.walk()
-                .onLeave { file ->
-                    if (chapters.isNotEmpty()) {
-                        val authorTitle = parseDirName(file)
-                        val sortedChapters = chapters.toList().sortedBy { it.file.name }
-                        bookBuilder.add(Book(authorTitle, sortedChapters, cover))
-                        chapters = mutableListOf()
-                        cover = null
-                    }
-                }
-        for (file in walk) {
-//            info("Walking through file $file")
-            if (file.isFile && file.name.endsWith(".mp3", true)) {
-                chapters.add(Chapter(file))
-            } else if(file.isFile && file.name == "cover.jpg") {
-                cover = file
-            }
-        }
-        books = bookBuilder.toList()
-        selectedTitle = books.firstOrNull()
+    internal constructor(books: List<Book>) {
+        this.books = books
+        this.selectedTitle = books.firstOrNull()
     }
+
 
     fun selectNextChapter(): Chapter? = selectedTitle?.nextChapter()
 
@@ -136,12 +140,27 @@ class Library {
         if(currentSelectedTitle == null) {
             if(books.isNotEmpty()) selectedTitle = books.first()
         } else {
-            val currentBookIndex = books.indexOf(selectedTitle)
+            val currentBookIndex = books.indexOf(currentSelectedTitle)
             if(currentBookIndex + 1 >= books.size) {
                 // wrap around to start
                 selectedTitle = books.first()
             } else {
                 selectedTitle = books[currentBookIndex + 1]
+            }
+        }
+    }
+
+    fun selectPreviousTitle() {
+        val currentSelectedTitle = selectedTitle
+        if(currentSelectedTitle == null) {
+            if(books.isNotEmpty()) selectedTitle = books.last()
+        } else {
+            val currentBookIndex = books.indexOf(currentSelectedTitle)
+            if(currentBookIndex - 1 < 0) {
+                // wrap around to end
+                selectedTitle = books.last()
+            } else {
+                selectedTitle = books[currentBookIndex - 1]
             }
         }
     }

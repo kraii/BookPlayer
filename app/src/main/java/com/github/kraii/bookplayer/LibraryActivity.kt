@@ -1,3 +1,5 @@
+@file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
+
 package com.github.kraii.bookplayer
 
 import android.graphics.BitmapFactory
@@ -38,6 +40,11 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
         LibraryHolder.get().selectNextTitle()
         updateCover()
     }
+
+    fun cyclePreviousBook() {
+        LibraryHolder.get().selectPreviousTitle()
+        updateCover()
+    }
 }
 
 class LibraryActivityUi : AnkoComponent<LibraryActivity> {
@@ -57,6 +64,13 @@ class LibraryActivityUi : AnkoComponent<LibraryActivity> {
             }
             button("Next") {
                 onClick { owner.cycleNextBook() }
+                textSize = 30f
+            }.lparams(width = wrapContent) {
+                horizontalMargin = dip(5)
+                topMargin = dip(10)
+            }
+            button("Previous") {
+                onClick { owner.cyclePreviousBook() }
                 textSize = 30f
             }.lparams(width = wrapContent) {
                 horizontalMargin = dip(5)

@@ -20,6 +20,21 @@ class LibraryTest {
     }
 
     @Test
+    fun mergesLibraryRetainingSelectionsAndTimestamps() {
+        library.selectNextChapter()
+        library.updateTimestamp(2000)
+        // note the animal farm files will still exist when this is called
+        val newlyScannedLibrary = buildLibrary("George_Orwell-1984", 10)
+        newlyScannedLibrary.mergeWith(library)
+
+        assertEquals(2, newlyScannedLibrary.books.size)
+        val selectedTitle : Book? = newlyScannedLibrary.selectedTitle()
+        assertEquals("Animal Farm", selectedTitle?.title)
+        assertEquals(1, selectedTitle?.currentChapter)
+        assertEquals(2000, selectedTitle?.currentChapterTimestamp)
+    }
+
+    @Test
     fun selectsNextChapter() {
         assertEquals("1.mp3", nameOf(library.currentlySelected()))
         assertEquals("2.mp3", nameOf(library.selectNextChapter()))
@@ -47,30 +62,27 @@ class LibraryTest {
     }
 
     @Test
-    fun libraryAsJson() {
-        library.selectNextChapter()
-        library.updateTimestamp(10)
+    fun selectsPreviousTitle() {
+        val libraryWith2Books = buildLibrary("Harry Potter and the Goblet of Fire-J.K. Rowling", 2)
+        libraryWith2Books.selectNextChapter()
 
-        val libraryRepository = LibraryRepository()
-        val json = libraryRepository.toJson(library)
+        libraryWith2Books.selectPreviousTitle()
+        assertEquals("Harry", libraryWith2Books.selectedTitle()?.title?.subSequence(0..4))
+        assertEquals("1.mp3", nameOf(libraryWith2Books.currentlySelected()))
 
-        val loadedLibrary = libraryRepository.fromJson(json)
-        assertEquals(library, loadedLibrary)
+        libraryWith2Books.selectPreviousTitle()
+        assertEquals("Animal Farm", libraryWith2Books.selectedTitle()?.title)
+        assertEquals("should still have the same chapter selected", "2.mp3", nameOf(libraryWith2Books.currentlySelected()))
     }
 
     @Test
-    fun mergesLibraryRetainingSelectionsAndTimestamps() {
+    fun libraryAsJson() {
         library.selectNextChapter()
-        library.updateTimestamp(2000)
-        // note the animal farm files will still exist when this is called
-        val newlyScannedLibrary = buildLibrary("George_Orwell-1984", 10)
-        newlyScannedLibrary.mergeWith(library)
-
-        assertEquals(2, newlyScannedLibrary.books.size)
-        val selectedTitle : Book? = newlyScannedLibrary.selectedTitle()
-        assertEquals("Animal Farm", selectedTitle?.title)
-        assertEquals(1, selectedTitle?.currentChapter)
-        assertEquals(2000, selectedTitle?.currentChapterTimestamp)
+        library.updateTimestamp(10)
+        val libraryRepository = LibraryRepository()
+        val json = libraryRepository.toJson(library)
+        val loadedLibrary = libraryRepository.fromJson(json)
+        assertEquals(library, loadedLibrary)
     }
 
     private fun nameOf(chapter: Chapter?): String {
@@ -82,7 +94,7 @@ class LibraryTest {
         bookDir.mkdirs()
         for (i in 1..highestNumberedBook) File(bookDir, "$i.mp3").createNewFile()
         File(bookDir, "cover.jpg").createNewFile()
-        val library = Library(tempDir)
+        val library = buildLibrary(tempDir)
         return library
     }
 
