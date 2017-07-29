@@ -26,9 +26,15 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
         val newlyScanned : Library = buildLibrary()
         LibraryHolder.updateFrom(newlyScanned)
         LibraryHolder.save(ctx)
-        info("library built ${LibraryHolder.get()}")
+        val library = LibraryHolder.get()
+        info("library built $library")
+        downloadCovers(library.books) { book ->
+            if(library.selectedTitle() == book) {
+                info("Updating display as $book has new cover")
+                updateDisplay()
+            }
+        }
     }
-
 
     fun updateDisplay() {
         val selectedTitle = LibraryHolder.get().selectedTitle()

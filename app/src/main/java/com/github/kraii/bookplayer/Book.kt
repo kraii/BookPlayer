@@ -51,6 +51,14 @@ data class Book (
     val totalChapters: Int
         get() = chapters.size
 
+    fun needsCover(): Boolean {
+        return cover == null
+    }
+
+    fun coverFile(): File {
+        return File(firstChapter().file.parentFile, "cover.jpg")
+    }
+
 }
 
 data class Chapter(val file: File, var currentTimestamp: Int = 0)

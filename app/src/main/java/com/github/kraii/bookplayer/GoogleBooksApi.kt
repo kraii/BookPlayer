@@ -14,13 +14,18 @@ import java.nio.charset.Charset
 
 data class SearchResult(val items: List<Volume>)
 
-data class Volume(val volumeInfo: VolumeInfo, val selfLink: String)
+data class Volume(val volumeInfo: VolumeInfo, val selfLink: String) {
+    fun matches(authorTitle: AuthorTitle): Boolean = volumeInfo.matches(authorTitle)
+}
 
 data class VolumeInfo(
         val title: String,
         val authors: List<String>? = null,
         val imageLinks: ImageLinks? = null
-)
+) {
+    fun matches(authorTitle: AuthorTitle): Boolean = authorTitle.title == title
+            && authors?.contains(authorTitle.author) ?: false
+}
 
 data class ImageLinks(
         val small: String?,
@@ -33,15 +38,27 @@ data class ImageLinks(
     }
 }
 
-private fun readSearchResult(data: String): SearchResult? {
-    return searchResultAdapter.fromJson(data)
+private fun readSearchResult(data: String): SearchResult? = searchResultAdapter.fromJson(data)
+
+private fun readVolume(data: String): Volume? = volumeAdapter.fromJson(data)
+
+fun downloadCovers(books: List<Book>, callback: (Book) -> Unit) {
+    books.filter { it.needsCover() }
+            .forEach { book ->
+                search(book.authorTitle) { (items) ->
+                    val chosenVolume = chooseVolume(book.authorTitle, items)
+                    if (chosenVolume != null) {
+                        cover(chosenVolume, book.coverFile(), { callback(book) })
+                    }
+                }
+            }
 }
 
-private fun readVolume(data: String): Volume? {
-    return volumeAdapter.fromJson(data)
+private fun chooseVolume(authorTitle: AuthorTitle, volumes: List<Volume>): Volume? {
+    return volumes.find { volume -> volume.matches(authorTitle) }
 }
 
-fun search(book: AuthorTitle, consumer: (SearchResult) -> Unit) {
+internal fun search(book: AuthorTitle, consumer: (SearchResult) -> Unit) {
     val params = listOf("q" to "${book.author} ${book.title}", "maxResults" to 5, "projection" to "lite")
     "https://www.googleapis.com/books/v1/volumes".httpGet(params).responseString { request, _, result ->
         result.fold({ data ->
@@ -55,7 +72,7 @@ fun search(book: AuthorTitle, consumer: (SearchResult) -> Unit) {
     }
 }
 
-fun cover(searchResultVolume: Volume, destination: File, callback: (File) -> Unit) {
+internal fun cover(searchResultVolume: Volume, destination: File, callback: (File) -> Unit) {
     searchResultVolume.selfLink.httpGet().responseString { request, _, result ->
         result.fold({ data ->
             val volume = readVolume(data)
@@ -66,7 +83,7 @@ fun cover(searchResultVolume: Volume, destination: File, callback: (File) -> Uni
                 imageUrl?.httpDownload()?.destination { _, _ ->
                     destination
                 }?.response { _, _, downloadResult ->
-                    when(downloadResult) {
+                    when (downloadResult) {
                         is Result.Success -> {
                             callback(destination)
                         }
