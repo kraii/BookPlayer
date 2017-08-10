@@ -57,7 +57,8 @@ object LibraryHolder {
     }
 
     fun updateFrom(newlyScanned: Library) {
-        library.mergeWith(newlyScanned)
+        newlyScanned.mergeWith(library)
+        library = newlyScanned
     }
 }
 
@@ -103,6 +104,7 @@ class Library {
                 book.currentChapterTimestamp = it.currentChapterTimestamp
             }
         }
+        selectedTitle = other.selectedTitle()
     }
 
     fun selectNextTitle() {

@@ -48,8 +48,8 @@ class LibraryTest {
         ))
 
         libraryWith2Books.selectNextTitle()
-        libraryWith2Books.mergeWith(refreshedLibrary)
-        assertEquals("Harry Potter and the Goblet of Fire", libraryWith2Books.selectedTitle()?.title)
+        refreshedLibrary.mergeWith(libraryWith2Books)
+        assertEquals("Harry Potter and the Goblet of Fire", refreshedLibrary.selectedTitle()?.title)
     }
 
     @Test

@@ -31,7 +31,7 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
             LibraryHolder.updateFrom(newlyScanned)
             LibraryHolder.save(ctx)
             val library = LibraryHolder.get()
-            info("library built")
+            info("library built with ${library.books.size} books")
             activityUiThread {
                 toast("Library Updated")
             }
