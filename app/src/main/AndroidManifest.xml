@@ -31,7 +31,7 @@
             android:theme="@style/FullscreenTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainPlayerActivity" />
+                android:value=".MainPlayerActivity"/>
 
         </activity>
     </application>

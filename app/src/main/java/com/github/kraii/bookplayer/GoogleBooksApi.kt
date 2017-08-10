@@ -9,7 +9,6 @@ import com.github.kittinunf.result.Result
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.KotlinJsonAdapterFactory
 import com.squareup.moshi.Moshi
-import java.io.File
 import java.nio.charset.Charset
 
 private val tag = "booksApi"
@@ -31,8 +30,8 @@ data class VolumeInfo(
     }
 }
 
-private val normaliseRegex =  "[\\s.,']".toRegex()
-internal fun normalise(s: String) : String = s.replace(normaliseRegex, "").toLowerCase()
+private val normaliseRegex = "[\\s.,']".toRegex()
+internal fun normalise(s: String): String = s.replace(normaliseRegex, "").toLowerCase()
 
 data class ImageLinks(
         val small: String?,
@@ -55,7 +54,7 @@ fun downloadCovers(books: List<Book>, callback: (Book) -> Unit) {
                 search(book.authorTitle) { (items) ->
                     val chosenVolume = chooseVolume(book.authorTitle, items)
                     if (chosenVolume != null) {
-                        cover(chosenVolume, book, { callback(book) })
+                        cover(chosenVolume, book, callback)
                     } else {
                         Log.w(tag, "Failed to find matching volume for ${book.authorTitle} in $items")
                     }
@@ -83,7 +82,7 @@ internal fun search(book: AuthorTitle, consumer: (SearchResult) -> Unit) {
     }
 }
 
-internal fun cover(searchResultVolume: Volume, book: Book, callback: (File) -> Unit) {
+internal fun cover(searchResultVolume: Volume, book: Book, callback: (Book) -> Unit) {
     Log.i(tag, "Downloading cover for ${searchResultVolume.volumeInfo.title} to $book")
     searchResultVolume.selfLink.httpGet().responseString { request, _, result ->
         result.fold({ data ->
@@ -94,12 +93,11 @@ internal fun cover(searchResultVolume: Volume, book: Book, callback: (File) -> U
                 val imageUrl = volume.volumeInfo.imageLinks?.bestAvailable()
                 Log.i(tag, "downloading $imageUrl")
                 imageUrl?.httpDownload()?.destination { _, _ ->
-                    book.coverFile()
+                    book.cover
                 }?.response { _, _, downloadResult ->
                     when (downloadResult) {
                         is Result.Success -> {
-                            book.cover = book.coverFile()
-                            callback(book.coverFile())
+                            callback(book)
                         }
                     }
                 }

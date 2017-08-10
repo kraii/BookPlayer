@@ -7,9 +7,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
-@Config(manifest= Config.NONE)
+@Config(manifest = Config.NONE)
 class GoogleBooksApiTest {
 
     @Before
@@ -40,19 +41,20 @@ class GoogleBooksApiTest {
 
     @Test
     fun downloadsCover() {
-        val file = createTempFile()
+        val bookDirectory = createTempDir()
         var called = false
         val volume = Volume(VolumeInfo("Animal Farm"), "https://www.googleapis.com/books/v1/volumes/AQLJ2IxOvOAC")
-        cover(volume, file) { called = true }
-        assertTrue(file.exists())
-        assertFalse(file.readBytes().isEmpty())
+        val book = Book(AuthorTitle("1", "2"), listOf(Chapter(File(bookDirectory, "1.mp3"))))
+        cover(volume, book) { called = true }
+        assertTrue(book.cover.exists())
+        assertFalse(book.cover.readBytes().isEmpty())
         assertTrue("callback should have been invoked", called)
     }
 
     @Test
     fun normalisesStringsForMatching() {
-       assertEquals("jkrowling", normalise("J . k RoWling"))
-       assertEquals("philosophersstone", normalise("Philosopher's Stone"))
+        assertEquals("jkrowling", normalise("J . k RoWling"))
+        assertEquals("philosophersstone", normalise("Philosopher's Stone"))
     }
 
 }

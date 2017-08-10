@@ -13,6 +13,7 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import kotlinx.android.synthetic.main.activity_main_player.*
 import org.jetbrains.anko.ctx
+import org.jetbrains.anko.imageBitmap
 import org.jetbrains.anko.startActivity
 
 class MainPlayerActivity : AppCompatActivity() {
@@ -62,7 +63,7 @@ class MainPlayerActivity : AppCompatActivity() {
         browseLibrary.setOnClickListener(this::openLibrary)
         LibraryHolder.load(ctx)
         loadCurrentlySelectedBook()
-        mediaPlayer.setOnErrorListener({_,_,_ ->
+        mediaPlayer.setOnErrorListener({ _, _, _ ->
             Log.i(LOG_TAG, "Media player error received, resetting")
             mediaPlayer.reset()
             loadCurrentlySelectedBook()
@@ -83,8 +84,10 @@ class MainPlayerActivity : AppCompatActivity() {
             mediaPlayer.prepare()
             mediaPlayer.seekTo(selectedChapter.currentTimestamp)
 
-            if(selectedTitle.cover?.exists() ?: false) {
-                bookCover.setImageBitmap(BitmapFactory.decodeFile(selectedTitle.cover?.path))
+            if (selectedTitle.cover.exists()) {
+                bookCover.setImageBitmap(BitmapFactory.decodeFile(selectedTitle.cover.path))
+            } else {
+                bookCover.imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.questionmark)
             }
         }
     }
@@ -121,7 +124,7 @@ class MainPlayerActivity : AppCompatActivity() {
     }
 
     private fun openLibrary(view: View) {
-        if(mediaPlayer.isPlaying) {
+        if (mediaPlayer.isPlaying) {
             pause(view)
         }
         startActivity<LibraryActivity>()
@@ -184,7 +187,7 @@ class MainPlayerActivity : AppCompatActivity() {
         super.onRestart()
         LibraryHolder.load(ctx)
         loadCurrentlySelectedBook()
-        if(mediaPlayer.isPlaying) {
+        if (mediaPlayer.isPlaying) {
             showPause()
         } else {
             showPlay()

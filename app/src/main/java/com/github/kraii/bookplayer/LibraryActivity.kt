@@ -25,13 +25,15 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
         info("checking permissions")
         verifyPermissions(this)
         info("refresh started")
-        val newlyScanned : Library = buildLibrary()
+        val newlyScanned: Library = buildLibrary()
         LibraryHolder.updateFrom(newlyScanned)
         LibraryHolder.save(ctx)
         val library = LibraryHolder.get()
         info("library built $library")
         downloadCovers(library.books) { book ->
-            if(library.selectedTitle() == book) {
+            val selectedTitle = LibraryHolder.get().selectedTitle()
+            info("selected title = [$selectedTitle] book = [$book]")
+            if (selectedTitle == book) {
                 info("Updating display as $book has new cover")
                 updateDisplay()
             }
@@ -40,32 +42,39 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
 
     fun updateDisplay() {
         val selectedTitle = LibraryHolder.get().selectedTitle()
-        if(selectedTitle != null) {
-            libraryActivityUi.bookCover?.imageBitmap = BitmapFactory.decodeFile(selectedTitle.cover?.path)
+        if (selectedTitle != null) {
+            val bitmap = BitmapFactory.decodeFile(selectedTitle.cover.path)
+            if (bitmap != null) {
+                libraryActivityUi.bookCover?.imageBitmap = bitmap
+            } else {
+                libraryActivityUi.bookCover?.imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.questionmark)
+            }
             updateChapterDisplay()
         }
     }
 
     fun updateChapterDisplay() {
         val selectedTitle = LibraryHolder.get().selectedTitle()
-        if(selectedTitle != null) {
+        if (selectedTitle != null) {
             libraryActivityUi.currentChapter?.text = "Current Chapter ${selectedTitle.currentChapter + 1} / ${selectedTitle.totalChapters}"
         }
     }
 
     fun cycleNextBook() {
         LibraryHolder.get().selectNextTitle()
+        info("selected title = ${LibraryHolder.get().selectedTitle()}")
         updateDisplay()
     }
 
     fun cyclePreviousBook() {
         LibraryHolder.get().selectPreviousTitle()
+        info("selected title = ${LibraryHolder.get().selectedTitle()}")
         updateDisplay()
     }
 
     fun toStartOfSelectedBook() {
         val selectedTitle = LibraryHolder.get().selectedTitle()
-        if(selectedTitle != null) {
+        if (selectedTitle != null) {
             selectedTitle.currentChapterTimestamp = 0
             selectedTitle.currentChapter = 0
             updateChapterDisplay()
@@ -84,8 +93,8 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
 }
 
 class LibraryActivityUi : AnkoComponent<LibraryActivity> {
-    var bookCover : ImageView? = null
-    var currentChapter : TextView? = null
+    var bookCover: ImageView? = null
+    var currentChapter: TextView? = null
 
     override fun createView(ui: AnkoContext<LibraryActivity>) = ui.apply {
         verticalLayout {
@@ -145,7 +154,7 @@ class LibraryActivityUi : AnkoComponent<LibraryActivity> {
                 topMargin = dip(10)
             }
 
-            currentChapter = textView("Current Chapter: - / -"){
+            currentChapter = textView("Current Chapter: - / -") {
                 textSize = 30f
             }.lparams(width = wrapContent, height = wrapContent) {
                 horizontalMargin = dip(5)

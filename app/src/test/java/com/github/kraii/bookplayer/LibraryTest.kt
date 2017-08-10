@@ -9,6 +9,7 @@ class LibraryTest {
     val tempDir = createTempDir()
     val library = buildLibrary("George_Orwell-Animal_Farm")
 
+
     @Test
     fun buildsLibrary() {
         assertEquals(1, library.books.size)
@@ -20,18 +21,35 @@ class LibraryTest {
     }
 
     @Test
-    fun mergesLibraryRetainingSelectionsAndTimestamps() {
+    fun mergesLibraryRetainingBookProgess() {
         library.selectNextChapter()
         library.updateTimestamp(2000)
         // note the animal farm files will still exist when this is called
         val newlyScannedLibrary = buildLibrary("George_Orwell-1984", 10)
         newlyScannedLibrary.mergeWith(library)
 
+
         assertEquals(2, newlyScannedLibrary.books.size)
         val selectedTitle: Book? = newlyScannedLibrary.selectedTitle()
         assertEquals("Animal Farm", selectedTitle?.title)
         assertEquals(1, selectedTitle?.currentChapter)
         assertEquals(2000, selectedTitle?.currentChapterTimestamp)
+    }
+
+    @Test
+    fun retainsSelectedTitleUponMerge() {
+        val libraryWith2Books = Library(listOf(
+                Book(AuthorTitle("Eric", "Animal Farm"), listOf(Chapter(File("Start")), Chapter(File("Pigs")))),
+                Book(AuthorTitle("J.K Rowling", "Harry Potter and the Goblet of Fire"), listOf(Chapter(File("Wizards"))))
+        ))
+        val refreshedLibrary = Library(listOf(
+                Book(AuthorTitle("Eric", "Animal Farm"), listOf(Chapter(File("Start")), Chapter(File("Pigs")))),
+                Book(AuthorTitle("J.K Rowling", "Harry Potter and the Goblet of Fire"), listOf(Chapter(File("Wizards"))))
+        ))
+
+        libraryWith2Books.selectNextTitle()
+        libraryWith2Books.mergeWith(refreshedLibrary)
+        assertEquals("Harry Potter and the Goblet of Fire", libraryWith2Books.selectedTitle()?.title)
     }
 
     @Test
@@ -88,7 +106,8 @@ class LibraryTest {
         val libraryRepository = LibraryRepository()
         val json = libraryRepository.toJson(library)
         val loadedLibrary = libraryRepository.fromJson(json)
-        assertEquals(library, loadedLibrary)
+        assertEquals(library.books, loadedLibrary.books)
+        assertEquals(library.selectedTitle(), loadedLibrary.selectedTitle())
     }
 
     private fun nameOf(chapter: Chapter?): String {
