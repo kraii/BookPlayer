@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import org.jetbrains.anko.*
@@ -21,21 +22,29 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
         updateDisplay()
     }
 
-    fun libraryRefresh() {
+    fun libraryRefresh(ui: AnkoContext<LibraryActivity>) {
         info("checking permissions")
         verifyPermissions(this)
-        info("refresh started")
-        val newlyScanned: Library = buildLibrary()
-        LibraryHolder.updateFrom(newlyScanned)
-        LibraryHolder.save(ctx)
-        val library = LibraryHolder.get()
-        info("library built $library")
-        downloadCovers(library.books) { book ->
-            val selectedTitle = LibraryHolder.get().selectedTitle()
-            info("selected title = [$selectedTitle] book = [$book]")
-            if (selectedTitle == book) {
-                info("Updating display as $book has new cover")
-                updateDisplay()
+        ui.doAsync {
+            info("refresh started")
+            val newlyScanned: Library = buildLibrary()
+            LibraryHolder.updateFrom(newlyScanned)
+            LibraryHolder.save(ctx)
+            val library = LibraryHolder.get()
+            info("library built")
+            activityUiThread {
+                toast("Library Updated")
+            }
+
+            downloadCovers(library.books) { book ->
+                val selectedTitle = LibraryHolder.get().selectedTitle()
+                info("selected title = [$selectedTitle] book = [$book]")
+                if (selectedTitle == book) {
+                    info("Updating display as $book has new cover")
+                    activityUiThread {
+                        updateDisplay()
+                    }
+                }
             }
         }
     }
@@ -43,6 +52,7 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
     fun updateDisplay() {
         val selectedTitle = LibraryHolder.get().selectedTitle()
         if (selectedTitle != null) {
+            libraryActivityUi.currentBook?.text = "${selectedTitle.author} - ${selectedTitle.title}"
             val bitmap = BitmapFactory.decodeFile(selectedTitle.cover.path)
             if (bitmap != null) {
                 libraryActivityUi.bookCover?.imageBitmap = bitmap
@@ -74,11 +84,17 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
 
     fun toStartOfSelectedBook() {
         val selectedTitle = LibraryHolder.get().selectedTitle()
-        if (selectedTitle != null) {
-            selectedTitle.currentChapterTimestamp = 0
-            selectedTitle.currentChapter = 0
-            updateChapterDisplay()
-        }
+        alert("Go to start of book", "Are you sure? Place in all chapters will be lost.") {
+            yesButton {
+                if (selectedTitle != null) {
+                    selectedTitle.currentChapterTimestamp = 0
+                    selectedTitle.currentChapter = 0
+                    updateChapterDisplay()
+                    toast("Book position reset")
+                }
+            }
+            noButton {}
+        }.show()
     }
 
     fun nextChapter() {
@@ -92,73 +108,108 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
     }
 }
 
-class LibraryActivityUi : AnkoComponent<LibraryActivity> {
+class LibraryActivityUi : AnkoComponent<LibraryActivity>, AnkoLogger {
     var bookCover: ImageView? = null
+    var currentBook: TextView? = null
     var currentChapter: TextView? = null
 
     override fun createView(ui: AnkoContext<LibraryActivity>) = ui.apply {
-        verticalLayout {
+        val screenHeight = resources.displayMetrics.heightPixels
+        val screenWidth = resources.displayMetrics.widthPixels
+        val ID_COVER = 1
+        val ID_CURRENT_BOOK = 2
+        val ID_CURRENT_CHAPTER = 3
+        val ID_REFRESH = 4
+
+        relativeLayout {
+            padding = sp(10)
             backgroundColor = Color.parseColor("#0099cc")
 
-            button("Refresh Library") {
-                onClick { owner.libraryRefresh() }
-                textSize = 30f
-            }.lparams(width = wrapContent) {
-                horizontalMargin = dip(5)
-                topMargin = dip(10)
-            }
-
-            button("Next Book") {
-                onClick { owner.cycleNextBook() }
-                textSize = 30f
-            }.lparams(width = wrapContent) {
-                horizontalMargin = dip(5)
-                topMargin = dip(10)
-            }
-
-            button("Previous Book") {
-                onClick { owner.cyclePreviousBook() }
-                textSize = 30f
-            }.lparams(width = wrapContent) {
-                horizontalMargin = dip(5)
-                topMargin = dip(10)
-            }
-
-            button("Next Chapter") {
-                onClick { owner.nextChapter() }
-                textSize = 30f
-            }.lparams(width = wrapContent) {
-                horizontalMargin = dip(5)
-                topMargin = dip(10)
-            }
-
-            button("Previous Chapter") {
-                onClick { owner.previousChapter() }
-                textSize = 30f
-            }.lparams(width = wrapContent) {
-                horizontalMargin = dip(5)
-                topMargin = dip(10)
-            }
-
-            button("Back to start of book") {
-                onClick { owner.toStartOfSelectedBook() }
-            }.lparams(width = wrapContent) {
-                horizontalMargin = dip(5)
-                topMargin = dip(10)
-            }
-
             bookCover = imageView {
+                id = ID_COVER
                 contentDescription = "Le book cover"
-            }.lparams(width = wrapContent, height = wrapContent) {
+            }.lparams(height = dip(screenHeight / 2)) {
+                horizontalMargin = dip(5)
+                topMargin = dip(10)
+                alignParentTop()
+            }
+
+            currentBook = textView("Unknown Book") {
+                id = ID_CURRENT_BOOK
+                textSize = 30f
+                textAlignment = View.TEXT_ALIGNMENT_CENTER
+            }.lparams(width = screenWidth / 2) {
+                below(ID_COVER)
+                centerHorizontally()
+                horizontalMargin = dip(5)
+                topMargin = dip(10)
+            }
+
+            imageButton(R.drawable.ic_keyboard_arrow_left_black_36dp) {
+                onClick { owner.cyclePreviousBook() }
+            }.lparams {
+                below(ID_COVER)
+                leftOf(ID_CURRENT_BOOK)
+                horizontalMargin = dip(5)
+                topMargin = dip(10)
+            }
+
+            imageButton(R.drawable.ic_keyboard_arrow_right_black_36dp) {
+                onClick { owner.cycleNextBook() }
+            }.lparams {
+                below(ID_COVER)
+                rightOf(ID_CURRENT_BOOK)
                 horizontalMargin = dip(5)
                 topMargin = dip(10)
             }
 
             currentChapter = textView("Current Chapter: - / -") {
+                id = ID_CURRENT_CHAPTER
                 textSize = 30f
-            }.lparams(width = wrapContent, height = wrapContent) {
+                textAlignment = View.TEXT_ALIGNMENT_CENTER
+            }.lparams(width = screenWidth / 2) {
+                below(ID_CURRENT_BOOK)
+                centerHorizontally()
                 horizontalMargin = dip(5)
-                topMargin = dip(10)
+                topMargin = dip(150)
+            }
+
+            imageButton(R.drawable.ic_keyboard_arrow_left_black_36dp) {
+                onClick { owner.previousChapter() }
+            }.lparams {
+                below(ID_CURRENT_BOOK)
+                leftOf(ID_CURRENT_CHAPTER)
+                horizontalMargin = dip(5)
+                topMargin = dip(150)
+            }
+
+            imageButton(R.drawable.ic_keyboard_arrow_right_black_36dp) {
+                onClick { owner.nextChapter() }
+            }.lparams {
+                below(ID_CURRENT_BOOK)
+                rightOf(ID_CURRENT_CHAPTER)
+                horizontalMargin = dip(5)
+                topMargin = dip(150)
+            }
+
+            button("Refresh Library") {
+                onClick { owner.libraryRefresh(ui) }
+                textSize = 30f
+                id = ID_REFRESH
+            }.lparams(width = wrapContent) {
+                below(ID_CURRENT_CHAPTER)
+                centerHorizontally()
+                horizontalMargin = dip(5)
+                topMargin = dip(80)
+            }
+
+            button("Back to start of book") {
+                onClick { owner.toStartOfSelectedBook() }
+            }.lparams(width = wrapContent) {
+                below(ID_REFRESH)
+                centerHorizontally()
+                horizontalMargin = dip(5)
+                topMargin = dip(20)
             }
         }
     }.view
