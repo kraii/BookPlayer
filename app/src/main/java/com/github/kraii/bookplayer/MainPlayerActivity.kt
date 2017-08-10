@@ -1,66 +1,32 @@
 package com.github.kraii.bookplayer
 
-import android.annotation.SuppressLint
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import kotlinx.android.synthetic.main.activity_main_player.*
-import org.jetbrains.anko.ctx
-import org.jetbrains.anko.imageBitmap
-import org.jetbrains.anko.startActivity
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import org.jetbrains.anko.*
+import org.jetbrains.anko.sdk25.coroutines.onClick
 
 class MainPlayerActivity : AppCompatActivity() {
-    private val mHideHandler = Handler()
-    private val mHidePart2Runnable = Runnable {
-        // Delayed removal of status and navigation bar
-        fullscreen_content!!.systemUiVisibility = View.SYSTEM_UI_FLAG_LOW_PROFILE or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-    }
-    private val mShowPart2Runnable = Runnable {
-        // Delayed display of UI elements
-        val actionBar = supportActionBar
-        actionBar?.show()
-        fullscreen_content_controls!!.visibility = View.VISIBLE
-    }
-    private var mVisible: Boolean = false
-    private val mHideRunnable = Runnable { hide() }
+    private val mainUi = MainPlayerActivityUi()
     private val mediaPlayer: MediaPlayer = MediaPlayer()
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-    private val mDelayHideTouchListener = View.OnTouchListener { _, _ ->
-        if (AUTO_HIDE) {
-            delayedHide(AUTO_HIDE_DELAY_MILLIS)
-        }
-        false
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        mainUi.setContentView(this)
+
         verifyPermissions(this)
-        setContentView(R.layout.activity_main_player)
-        mVisible = true
-
-        // Set up the user interaction to manually show or hide the system UI.
-        fullscreen_content!!.setOnClickListener { toggle() }
-
-        // Upon interacting with UI controls, delay any scheduled hide()
-        // operations to prevent the jarring behavior of controls going away
-        // while interacting with the UI.
-        dummy_button.setOnTouchListener(mDelayHideTouchListener)
-
-        play.setOnClickListener(this::play)
-        pause.setOnClickListener(this::pause)
-        forwardChapter.setOnClickListener(this::forwardChapter)
-        browseLibrary.setOnClickListener(this::openLibrary)
         LibraryHolder.load(ctx)
         loadCurrentlySelectedBook()
         mediaPlayer.setOnErrorListener({ _, _, _ ->
@@ -83,61 +49,41 @@ class MainPlayerActivity : AppCompatActivity() {
             mediaPlayer.setDataSource(this, uri)
             mediaPlayer.prepare()
             mediaPlayer.seekTo(selectedChapter.currentTimestamp)
-
+            mainUi.currentBook?.text = "${selectedTitle.author} - ${selectedTitle.title}"
             if (selectedTitle.cover.exists()) {
-                bookCover.setImageBitmap(BitmapFactory.decodeFile(selectedTitle.cover.path))
+                mainUi.bookCover?.setImageBitmap(BitmapFactory.decodeFile(selectedTitle.cover.path))
             } else {
-                bookCover.imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.questionmark)
+                mainUi.bookCover?.imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.questionmark)
             }
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun play(view: View) {
+    internal fun play() {
         mediaPlayer.start()
         showPause()
     }
 
     private fun showPause() {
-        play.visibility = GONE
-        pause.visibility = VISIBLE
+        mainUi.play?.visibility = GONE
+        mainUi.pause?.visibility = VISIBLE
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun pause(unused: View) {
+    internal fun pause() {
         mediaPlayer.pause()
         showPlay()
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun forwardChapter(view: View) {
-        val newChapter = LibraryHolder.get().selectNextChapter()
-        if (newChapter != null) {
-            showPlay()
-            loadCurrentlySelectedBook()
-        }
-    }
 
     private fun showPlay() {
-        play.visibility = VISIBLE
-        pause.visibility = GONE
+        mainUi.play?.visibility = VISIBLE
+        mainUi.pause?.visibility = GONE
     }
 
-    private fun openLibrary(view: View) {
+    internal fun openLibrary() {
         if (mediaPlayer.isPlaying) {
-            pause(view)
+            pause()
         }
         startActivity<LibraryActivity>()
-    }
-
-
-    override fun onPostCreate(savedInstanceState: Bundle?) {
-        super.onPostCreate(savedInstanceState)
-
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        delayedHide(100)
     }
 
     override fun onDestroy() {
@@ -146,36 +92,6 @@ class MainPlayerActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    private fun toggle() {
-        if (mVisible) {
-            hide()
-        } else {
-            show()
-        }
-    }
-
-    private fun hide() {
-        // Hide UI first
-        val actionBar = supportActionBar
-        actionBar?.hide()
-        fullscreen_content_controls!!.visibility = View.GONE
-        mVisible = false
-
-        // Schedule a runnable to remove the status and navigation bar after a delay
-        mHideHandler.removeCallbacks(mShowPart2Runnable)
-        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY.toLong())
-    }
-
-    @SuppressLint("InlinedApi")
-    private fun show() {
-        // Show the system bar
-        fullscreen_content!!.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-        mVisible = true
-
-        // Schedule a runnable to display UI elements after a delay
-        mHideHandler.removeCallbacks(mHidePart2Runnable)
-        mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY.toLong())
-    }
 
     override fun onPause() {
         super.onPause()
@@ -194,35 +110,59 @@ class MainPlayerActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Schedules a call to hide() in [delayMillis] milliseconds, canceling any
-     * previously scheduled calls.
-     */
-    private fun delayedHide(delayMillis: Int) {
-        mHideHandler.removeCallbacks(mHideRunnable)
-        mHideHandler.postDelayed(mHideRunnable, delayMillis.toLong())
-    }
-
     companion object {
-        /**
-         * Whether or not the system UI should be auto-hidden after
-         * [.AUTO_HIDE_DELAY_MILLIS] milliseconds.
-         */
-        private val AUTO_HIDE = true
-
-        /**
-         * If [.AUTO_HIDE] is set, the number of milliseconds to wait after
-         * user interaction before hiding the system UI.
-         */
-        private val AUTO_HIDE_DELAY_MILLIS = 3000
-
-        /**
-         * Some older devices needs a small delay between UI widget updates
-         * and a change of the status and navigation bar.
-         */
-        private val UI_ANIMATION_DELAY = 300
-
         private val LOG_TAG = "MainActivity"
     }
+}
+
+@Suppress("EXPERIMENTAL_FEATURE_WARNING")
+class MainPlayerActivityUi : AnkoComponent<MainPlayerActivity>, AnkoLogger {
+    var bookCover: ImageView? = null
+    var currentBook: TextView? = null
+    var play: ImageButton? = null
+    var pause: ImageButton? = null
+
+    override fun createView(ui: AnkoContext<MainPlayerActivity>) = ui.apply {
+        val screenHeight = resources.displayMetrics.heightPixels
+        val screenWidth = resources.displayMetrics.widthPixels
+
+        linearLayout {
+            orientation = LinearLayout.VERTICAL
+            padding = sp(10)
+            backgroundColor = Color.parseColor("#0099cc")
+            gravity = Gravity.CENTER
+
+            play = imageButton(R.drawable.ic_play_circle_filled_black_48dp) {
+                onClick { owner.play() }
+            }.lparams(height = screenHeight / 3, width = screenWidth / 2)
+
+            pause = imageButton(R.drawable.ic_pause_circle_filled_black_48dp) {
+                onClick { owner.pause() }
+            }.lparams(height = screenHeight / 3, width = screenWidth / 2)
+
+            pause?.visibility = GONE
+
+            bookCover = imageView {
+                contentDescription = "Le book cover"
+            }.lparams(height = dip(screenHeight / 3)) {
+                topMargin = dip(10)
+            }
+
+            currentBook = textView("Unknown Book") {
+                textSize = 30f
+                textAlignment = View.TEXT_ALIGNMENT_CENTER
+            }.lparams(width = screenWidth / 2) {
+                topMargin = dip(10)
+                weight = 10f
+            }
+
+            button("Library") {
+                textSize = 25f
+                onClick { owner.openLibrary() }
+            }.lparams {
+                topMargin = dip(30)
+            }
+        }
+    }.view
 }
 
