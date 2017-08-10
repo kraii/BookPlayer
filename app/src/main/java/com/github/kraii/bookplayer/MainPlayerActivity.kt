@@ -44,7 +44,7 @@ class MainPlayerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        verifyStoragePermissions(this)
+        verifyPermissions(this)
         setContentView(R.layout.activity_main_player)
         mVisible = true
 

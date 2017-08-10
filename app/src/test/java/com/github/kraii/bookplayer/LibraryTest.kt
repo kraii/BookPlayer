@@ -7,7 +7,7 @@ import java.io.File
 
 class LibraryTest {
     val tempDir = createTempDir()
-    val library = buildLibrary("Animal_Farm-George_Orwell")
+    val library = buildLibrary("George_Orwell-Animal_Farm")
 
     @Test
     fun buildsLibrary() {
@@ -16,7 +16,7 @@ class LibraryTest {
         assertEquals("George Orwell", book.author)
         assertEquals("Animal Farm", book.title)
         assertEquals(5, book.chapters.size)
-        assertEquals(File(tempDir, "Animal_Farm-George_Orwell/cover.jpg"), book.cover)
+        assertEquals(File(tempDir, "George_Orwell-Animal_Farm/cover.jpg"), book.cover)
     }
 
     @Test

@@ -22,6 +22,8 @@ class LibraryActivity : AppCompatActivity(), AnkoLogger {
     }
 
     fun libraryRefresh() {
+        info("checking permissions")
+        verifyPermissions(this)
         info("refresh started")
         val newlyScanned : Library = buildLibrary()
         LibraryHolder.updateFrom(newlyScanned)

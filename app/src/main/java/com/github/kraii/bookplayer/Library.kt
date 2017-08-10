@@ -35,8 +35,8 @@ fun buildLibrary(audioBooksDirectory: File): Library {
 
 private fun parseDirName(file: File): AuthorTitle {
     val split: List<String> = file.name.replace("_", " ").split("-")
-    val title = split.firstOrNull() ?: ""
-    val author = if (split.size > 1) split[1] else ""
+    val author = split.firstOrNull() ?: ""
+    val title = if (split.size > 1) split[1] else ""
     return AuthorTitle(author, title)
 }
 

@@ -21,8 +21,8 @@ class GoogleBooksApiTest {
 
     @Test
     fun searchForBook() {
-        search(AuthorTitle("George Orwell", "Animal Farm")) { r ->
-            print(r)
+        search(AuthorTitle("J.K Rowling", "Harry Potter and the Philosopher's Stone")) { r ->
+            assertEquals(5, r.items.size)
         }
     }
 
@@ -44,10 +44,15 @@ class GoogleBooksApiTest {
         var called = false
         val volume = Volume(VolumeInfo("Animal Farm"), "https://www.googleapis.com/books/v1/volumes/AQLJ2IxOvOAC")
         cover(volume, file) { called = true }
-        println(file.path)
         assertTrue(file.exists())
         assertFalse(file.readBytes().isEmpty())
         assertTrue("callback should have been invoked", called)
+    }
+
+    @Test
+    fun normalisesStringsForMatching() {
+       assertEquals("jkrowling", normalise("J . k RoWling"))
+       assertEquals("philosophersstone", normalise("Philosopher's Stone"))
     }
 
 }
